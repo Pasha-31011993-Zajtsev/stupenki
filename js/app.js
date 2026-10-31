@@ -229,6 +229,11 @@ export function start() {
 start();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing; if (!nw || !navigator.serviceWorker.controller) return;
+      nw.addEventListener('statechange', () => { if (nw.state === 'activated') toast('✨ Приложение обновилось — новые задания при следующем запуске', 4000); });
+    });
+  }).catch(() => {}));
 }
 void $; void modal; void available; void refresh; void stop; void THEMES; void childForm;

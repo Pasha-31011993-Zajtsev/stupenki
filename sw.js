@@ -1,6 +1,6 @@
 // «Ступеньки» © 2026 Павел Зайцев. Авторы: Павел Зайцев и Claude. Лицензия CC BY-NC-ND 4.0
 // Офлайн-режим: после первого открытия всё приложение хранится на устройстве.
-const CACHE = 'stupenki-5c103875d8';
+const CACHE = 'stupenki-0ff569e6a7';
 const FILES = ["./","index.html","manifest.json","LICENSE","css/app.css","js/app.js","js/engine.js","js/logoped.js","js/mouth.js","js/nav.js","js/parent.js","js/skills/common.js","js/skills/english.js","js/skills/faith.js","js/skills/logic.js","js/skills/math.js","js/skills/russian.js","js/skills/world.js","js/store.js","js/themes.js","js/ui.js","js/voice.js","js/walks.js","fonts/nunito-cyrillic-400-normal.woff2","fonts/nunito-cyrillic-600-normal.woff2","fonts/nunito-cyrillic-800-normal.woff2","fonts/nunito-cyrillic-900-normal.woff2","fonts/nunito-latin-400-normal.woff2","fonts/nunito-latin-600-normal.woff2","fonts/nunito-latin-800-normal.woff2","fonts/nunito-latin-900-normal.woff2","icons/icon-180.png","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

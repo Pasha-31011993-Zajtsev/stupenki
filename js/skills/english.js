@@ -12,8 +12,8 @@ const W = [
   ['hand', 'рука', '✋', 2], ['eye', 'глаз', '👁️', 2], ['nose', 'нос', '👃', 2], ['ear', 'ухо', '👂', 2], ['mouth', 'рот', '👄', 2], ['foot', 'нога (стопа)', '🦶', 2],
   ['bear', 'медведь', '🐻', 2], ['fox', 'лиса', '🦊', 2], ['frog', 'лягушка', '🐸', 2], ['horse', 'лошадь', '🐴', 2], ['cow', 'корова', '🐮', 2], ['pig', 'свинья', '🐷', 2], ['mouse', 'мышь', '🐭', 2], ['rabbit', 'кролик', '🐰', 2],
   ['banana', 'банан', '🍌', 2], ['bread', 'хлеб', '🍞', 2], ['cake', 'торт', '🎂', 2], ['egg', 'яйцо', '🥚', 2], ['tea', 'чай', '🍵', 2], ['juice', 'сок', '🧃', 2],
-  ['book', 'книга', '📕', 3], ['pen', 'ручка', '🖊️', 3], ['pencil', 'карандаш', '✏️', 3], ['bag', 'сумка', '👜', 3], ['desk', 'парта', '🪑', 3], ['school', 'школа', '🏫', 3], ['teacher', 'учитель', '👩‍🏫', 3],
-  ['shirt', 'рубашка', '👕', 3], ['dress', 'платье', '👗', 3], ['hat', 'шляпа', '👒', 3], ['shoes', 'ботинки', '👞', 3], ['socks', 'носки', '🧦', 3], ['coat', 'пальто', '🧥', 3],
+  ['book', 'книга', '📕', 3], ['pen', 'ручка', '🖊️', 3], ['pencil', 'карандаш', '✏️', 3], ['bag', 'сумка', '👜', 3], ['chair', 'стул', '🪑', 3], ['school', 'школа', '🏫', 3], ['teacher', 'учитель', '👩‍🏫', 3],
+  ['T-shirt', 'футболка', '👕', 3], ['dress', 'платье', '👗', 3], ['hat', 'шляпа', '👒', 3], ['shoes', 'ботинки', '👞', 3], ['socks', 'носки', '🧦', 3], ['coat', 'пальто', '🧥', 3],
   ['tree', 'дерево', '🌳', 3], ['flower', 'цветок', '🌸', 3], ['rain', 'дождь', '🌧️', 3], ['snow', 'снег', '❄️', 3], ['star', 'звезда', '⭐', 3], ['moon', 'луна', '🌙', 3],
   ['winter', 'зима', '☃️', 4], ['spring', 'весна', '🌷', 4], ['summer', 'лето', '🏖️', 4], ['autumn', 'осень', '🍂', 4], ['morning', 'утро', '🌅', 4], ['night', 'ночь', '🌃', 4],
   ['happy', 'весёлый', '😀', 4], ['sad', 'грустный', '😢', 4], ['big', 'большой', '🐘', 4], ['small', 'маленький', '🐜', 4], ['hot', 'горячий', '🔥', 4], ['cold', 'холодный', '🧊', 4],
@@ -32,7 +32,8 @@ function words(l, child) {
   if (t === 2) return { q: `Как переводится слово «${w[0]}»?`, say: ['Как переводится слово', { en: w[0] }], stage: big(w[0]), choices: shuffle([w, ...others]).map(x => ({ v: x[0], label: x[1] })), answer: w[0], cols: 2, explain: `${w[0]} — ${w[1]}` };
   // пропущенная буква
   const i = Math.floor(Math.random() * w[0].length); const L = w[0][i];
-  const wrong = sample('aeiouybcdglmnprst'.split('').filter(c => c !== L), 3);
+  const VOC = new Set(W.map(x => x[0]).concat(['cut', 'cot', 'hot', 'hit', 'hut', 'big', 'bug', 'beg', 'peg', 'pig', 'pin', 'pan', 'bad', 'bud', 'bed', 'red', 'rod', 'ten', 'tan', 'tin', 'sit', 'sat', 'set', 'pot', 'pit', 'pet', 'bat', 'but', 'bit', 'let', 'lot', 'not', 'net', 'nut', 'map', 'mop', 'top', 'tip', 'tap', 'dig', 'dog', 'fan', 'fin', 'fun', 'man', 'men', 'run', 'ran', 'sun', 'son', 'sin', 'cap', 'cup', 'cop']));
+  const wrong = sample('aeiouybcdglmnprst'.split('').filter(c => c !== L && !VOC.has(w[0].slice(0, i) + c + w[0].slice(i + 1))), 3);
   return { q: 'Какой буквы не хватает?', stage: `${pic(w[2])}${big(w[0].slice(0, i) + '<span class="gap">_</span>' + w[0].slice(i + 1))}`, choices: shuffle([L, ...wrong]).map(v => ({ v, label: v })), answer: L, big: true, explain: `${w[0]} — ${w[1]}`, speakEn: w[0] };
 }
 
@@ -42,15 +43,15 @@ const G = [
   [1, 'She ___ my sister.', 'is', ['am', 'are'], 'He / she / it — is'],
   [1, 'They ___ friends.', 'are', ['is', 'am'], 'We / you / they — are'],
   [1, 'I ___ a cat.', 'have', ['has', 'having'], 'I / you / we / they — have'],
-  [1, 'He ___ a dog.', 'has', ['have', 'is'], 'He / she / it — has'],
-  [1, 'This is ___ apple.', 'an', ['a', 'the'], 'Перед гласным звуком — an: an apple'],
+  [1, 'He ___ a dog.', 'has', ['have', 'having'], 'He / she / it — has'],
+  [1, 'This is ___ apple.', 'an', ['a', 'am'], 'Перед гласным звуком — an: an apple'],
   [1, 'This is ___ ball.', 'a', ['an', 'am'], 'Перед согласным — a: a ball'],
   [2, 'two cat___', 's', ['es', '—'], 'Много — добавляем -s: cats'],
   [2, 'three box___', 'es', ['s', '—'], 'После x, s, sh, ch добавляем -es: boxes'],
   [2, 'one man, two ___', 'men', ['mans', 'mens'], 'Особое слово: man — men'],
   [2, 'one child, two ___', 'children', ['childs', 'childes'], 'Особое слово: child — children'],
   [2, 'one tooth, many ___', 'teeth', ['tooths', 'toothes'], 'Особое слово: tooth — teeth'],
-  [2, 'The book is ___ the table.', 'on', ['in', 'under'], 'on — на, in — в, under — под'],
+  [2, 'The book is ___ the table.', 'on', ['of', 'at'], 'on — на, in — в, under — под'],
   [3, 'He ___ football every day.', 'plays', ['play', 'playing'], 'Present Simple: he / she / it + s: he plays'],
   [3, 'I ___ to school every day.', 'go', ['goes', 'going'], 'I / you / we / they — без -s'],
   [3, 'She ___ not like milk.', 'does', ['do', 'is'], 'Отрицание с he / she / it: does not'],
