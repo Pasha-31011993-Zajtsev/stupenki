@@ -135,7 +135,8 @@ export function parentHome() {
       menuItem('🧭', 'Дневник прогулок', 'Ответы и фото детей с прогулок', () => go(walkDiary)),
       menuItem('⚙️', 'Настройки', 'Длина занятия, код родителя', () => go(settingsScreen)),
       menuItem('❓', 'Как пользоваться', 'Коротко о приложении', () => go(helpScreen)),
-      menuItem('©', 'О приложении', 'Авторы и условия использования', () => go(aboutScreen))),
+      menuItem('©', 'О приложении', 'Обращение к родителям, авторы, условия', () => go(aboutScreen)),
+      menuItem('✈️', 'Нашли ошибку?', 'Напишите в Telegram-канал «Ступеньки»', () => window.open('https://t.me/+mFYVkZdRTXM2ZmUy', '_blank', 'noopener'))),
   ];
 }
 const menuItem = (ico, t, sub, fn) => h('button.menu-item', { onclick: fn }, h('div.ico', ico), h('div', h('div.name', t), h('div.small', sub)), h('div.chev', '›'));
@@ -299,6 +300,11 @@ void stop; void effG; void accuracy; void themeOf; void blobDel; void app;
 
 export function aboutScreen() {
   return [header('О приложении'),
+    h('div.panel', h('h2', 'Дорогие родители!'),
+      h('p', '«Ступеньки» созданы, чтобы помочь православным родителям учить и развивать своих детей дома. Это бесплатное приложение — одно на всю семью, без рекламы и подписок.'),
+      h('p', 'Все материалы проверялись несколько раз, но ошибки всё равно возможны. Если вы заметили неточность, неверную информацию или что-то работает не так, напишите нам в Telegram-канал «Ступеньки». Укажите раздел, текст задания и что не так.'),
+      h('a.btn.good', { href: 'https://t.me/+mFYVkZdRTXM2ZmUy', target: '_blank', rel: 'noopener' }, '✈️ Написать в «Ступеньки»'),
+      h('p.muted.small', 'Бог в помощь вам и вашим детям!')),
     h('div.panel.about', h('div.logo-big', stairs()), h('h2.center', 'Ступеньки'),
       h('p.center', 'Семейное обучающее приложение для детей от 3 лет до 6 класса'),
       h('p.center.big-text', '© 2026 Павел Зайцев'),

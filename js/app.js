@@ -28,7 +28,7 @@ export function familyScreen() {
     h('div.family-head', h('div.logo', stairs()), h('h1', 'Ступеньки'), h('p.muted', 'Кто сегодня занимается?')),
     grid,
     h('button.parent-link', { onclick: () => parentGate(parentHome) }, '🔒 Для родителей'),
-    h('p.copyright', '© 2026 Павел Зайцев и Claude. Бесплатно, не для продажи'),
+    h('p.copyright', '© 2026 Павел Зайцев и Claude. Бесплатно, не для продажи. ', h('a', { href: 'https://t.me/+mFYVkZdRTXM2ZmUy', target: '_blank', rel: 'noopener' }, 'Нашли ошибку? Напишите нам')),
   ];
 }
 function openChild(id) {

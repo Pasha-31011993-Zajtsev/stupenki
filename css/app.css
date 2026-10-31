@@ -356,3 +356,6 @@ ol.steps li:hover{background:#F5F7FB}
 .geo-status{text-align:center;margin:16px auto;max-width:560px;font-weight:700;font-size:18px}
 .geo-status.ok{color:var(--good);font-size:22px;font-weight:900}
 .compass{display:flex;justify-content:center;margin-top:10px}
+
+.copyright a{color:var(--accent2);font-weight:800}
+.panel a.btn{margin:4px 0 8px}
