@@ -1,6 +1,7 @@
 // «Ступеньки» © 2026 Павел Зайцев. Авторы: Павел Зайцев и Claude. Лицензия CC BY-NC-ND 4.0 — см. LICENSE
 // Окружающий мир: животные, деревья, природа, география, человек, космос
-import { register } from '../engine.js';
+import { register, bankPick } from '../engine.js';
+import { NATURE2, HISTORY, LITERATURE } from '../data/world2.js';
 import { pick, shuffle, opts, sample } from '../ui.js';
 import { pic } from './common.js';
 
@@ -34,8 +35,8 @@ export const TREES = [
   ['яблоня', 'Весной цветёт бело-розовыми цветами, осенью — яблоки'],
   ['черёмуха', 'Весной белые душистые кисти цветов, летом — чёрные терпкие ягоды'],
 ];
-function trees(l) {
-  const t = pick(TREES.slice(0, l === 1 ? 6 : 12));
+function trees(l, child) {
+  const t = bankPick(child, 'w-trees', TREES.slice(0, l === 1 ? 6 : 12), x => x[0]);
   return { q: 'Какое это дерево?', stage: `<div class="desc">🌳 ${t[1]}</div>`, choices: opts(t[0], TREES.slice(0, l === 1 ? 6 : 12).map(x => x[0])).map(v => ({ v, label: v })), answer: t[0], cols: 2, explain: `Это ${t[0]}. На прогулке попробуй найти такое дерево!` };
 }
 
@@ -79,13 +80,26 @@ const NATURE = [
   [4, 'Какая самая длинная река России (вместе с притоком)?', 'Обь с Иртышом', ['Волга', 'Лена', 'Амур'], 'Обь с Иртышом — около 5400 км'],
   [4, 'Как называется оболочка Земли из воздуха?', 'атмосфера', ['гидросфера', 'литосфера', 'биосфера'], 'Атмосфера — воздушная оболочка; гидросфера — водная; литосфера — каменная'],
 ];
-function nature(l) {
-  const pool = NATURE.filter(x => x[0] <= l && x[0] >= l - 1);
-  const it = pick(pool);
-  return { q: it[1], choices: shuffle([it[2], ...it[3]]).map(v => ({ v, label: v })), answer: it[2], cols: it[2].length > 14 ? 1 : 2, explain: it[4] };
+// NATURE2: [уровень, эмодзи, вопрос, ответ, неверные, пояснение] → приводим к формату NATURE
+const ALLN = [...NATURE.map(x => [x[0], '', ...x.slice(1)]), ...NATURE2];
+function nature(l, child) {
+  const pool = ALLN.filter(x => x[0] <= l && x[0] >= l - 1);
+  const it = bankPick(child, 'w-nature', pool, x => x[2]).slice(1);
+  return { key: it[1], stage: it[0] ? pic(it[0]) : null, q: it[1], choices: shuffle([it[2], ...it[3]]).map(v => ({ v, label: v })), answer: it[2], cols: it[2].length > 14 ? 1 : 2, explain: it[4] };
+}
+
+function bankQuiz(arr, id) {
+  return (l, child) => {
+    let pool = arr.filter(x => x[0] === l || (x[0] === l - 1 && Math.random() < 0.25));
+    if (!pool.length) pool = arr.filter(x => x[0] <= l); if (!pool.length) pool = arr;
+    const it = bankPick(child, id, pool, x => x[2]); if (!it) return null;
+    return { key: it[2], q: it[2], stage: pic(it[1]), choices: shuffle([it[3], ...it[4]]).map(v => ({ v, label: v })), answer: it[3], cols: it[3].length > 14 ? 1 : 2, explain: it[5] };
+  };
 }
 
 register([
+  { id: 'w-history', sec: 'world', title: 'История', icon: '🏰', g: [3, 6], levels: 3, gen: bankQuiz(HISTORY, 'w-history'), start: g => (g <= 4 ? 1 : g === 5 ? 2 : 3) },
+  { id: 'r-lit', sec: 'russian', title: 'Литература и сказки', icon: '📚', g: [0, 6], levels: 3, gen: bankQuiz(LITERATURE, 'r-lit'), start: g => (g <= 1 ? 1 : g <= 4 ? 2 : 3) },
   { id: 'w-animals', sec: 'world', title: 'Животные', icon: '🐾', g: [-3, 1], levels: 2, gen: animals },
   { id: 'w-trees', sec: 'world', title: 'Деревья', icon: '🌳', g: [-1, 4], levels: 2, gen: trees, prompts: ['Какое это дерево?'] },
   { id: 'w-nature', sec: 'world', title: 'Природа, Земля и человек', icon: '🌍', g: [0, 6], levels: 4, gen: nature, weight: 1.4 },

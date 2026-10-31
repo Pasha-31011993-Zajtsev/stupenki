@@ -8,6 +8,7 @@ import { THEMES, themeOf, applyTheme, praiseFor, TRY_AGAIN } from './themes.js';
 import { SECTIONS, SKILL, sectionsFor, secTitle, planMixed, planSection, genTask, record, effG, available, isPre } from './engine.js';
 import { speechHome } from './logoped.js';
 import { walksFor } from './walks.js';
+import { myPlacesBlock } from './places.js';
 import { parentGate, parentHome, childForm, setupScreen, setFamily, stairs } from './parent.js';
 import './skills/math.js';
 import './skills/russian.js';
@@ -15,6 +16,7 @@ import './skills/logic.js';
 import './skills/world.js';
 import './skills/english.js';
 import './skills/faith.js';
+import './skills/extra.js';
 
 /* ================= СЕМЬЯ ================= */
 export function familyScreen() {
@@ -93,7 +95,7 @@ export function lessonScreen(sec) {
     card.append(h('div.prompt-row', h('button.speak-btn', { onclick: speakTask, 'aria-label': 'Послушать' }, '🔊'), qEl));
     if (task.stage) card.append(h('div.stage', { html: task.stage }));
     const fb = h('div.feedback');
-    const rec = ok => { if (!recorded) { recorded = true; if (ok) good++; const ch = record(c, task.skill, ok); if (ch === 'up') setTimeout(() => toast('🎉 Новый уровень: ' + SKILL[task.skill].title), 900); } };
+    const rec = ok => { if (!recorded) { recorded = true; if (ok) good++; const ch = record(c, task.skill, ok, task.key); if (ch === 'up') setTimeout(() => toast('🎉 Новый уровень: ' + SKILL[task.skill].title), 900); } };
     const success = async () => {
       if (finished) return; finished = true; rec(true); chime('good');
       const sEl = document.getElementById('starsNow'); if (sEl) { sEl.textContent = String(c.stars); sEl.parentElement.classList.remove('bump'); void sEl.offsetWidth; sEl.parentElement.classList.add('bump'); }
@@ -121,6 +123,8 @@ export function lessonScreen(sec) {
       task.custom(box, {
         done: (ok, explain) => ok ? success() : wrong(explain),
         miss: (explain, reveal) => wrong(explain, reveal),
+        result: (ok, explain) => { if (ok) success(); else { rec(false); chime('bad'); showAnswer(explain); } },
+        say,
         setQ: (text, s) => { qEl.textContent = text; task.say = s || text; task.q = text; speakTask(); },
         child: c,
       });
@@ -189,7 +193,8 @@ function walkScreen() {
   const grid = h('div.walk-list');
   list.forEach(w => { const d = c.walks[w[0]]; grid.append(h('button.walk-item' + (d ? '.done' : ''), { onclick: () => go(walkTask, w) }, h('div.ico', w[1]), h('div.wbody', h('div.name', w[2]), h('div.small', '★'.repeat(w[8]) + (d ? ' · выполнено ' + d.date.slice(5).split('-').reverse().join('.') : ''))), h('div.check', d ? '✅' : '›'))); });
   setTimeout(() => say('Задания для прогулки. Выбери, что найдёшь сегодня!'), 250);
-  return [header('🧭 Прогулка ★'), h('p.muted.center', 'Задания со звёздочкой — выполняй вместе со взрослым на улице. Подходят к сегодняшнему времени года.'), grid];
+  return [header('🧭 Прогулка ★'), h('p.muted.center', 'Задания со звёздочкой — выполняй вместе со взрослым на улице. Подходят к сегодняшнему времени года.'), myPlacesBlock(c), grid,
+    DB.places && DB.places.length ? null : h('p.muted.center.small', 'Взрослые могут добавить ваши места (дом, школу, храм) в разделе для родителей — тогда появятся личные задания.')];
 }
 function walkTask(w) {
   const c = app.child; const prev = c.walks[w[0]];

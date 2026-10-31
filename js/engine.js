@@ -30,7 +30,7 @@ export const secTitle = (sec, child) => (isPre(child) ? SECTIONS[sec].pre : SECT
 
 export function available(child, sec) {
   const g = effG(child);
-  return SKILLS.filter(s => (!sec || s.sec === sec) && g >= s.g[0] && g <= s.g[1]);
+  return SKILLS.filter(s => (!sec || s.sec === sec) && g >= s.g[0] && g <= s.g[1] && (!s.when || s.when(child)));
 }
 export function sectionsFor(child) {
   const set = new Set(available(child).map(s => s.sec));
@@ -59,8 +59,20 @@ export function weakness(child, id) {
 export function accuracy(child, id) { const s = child.skills[id]; return s && s.n ? s.ok / s.n : null; }
 
 /** записать ответ и при необходимости сменить уровень. Возвращает 'up' | 'down' | null */
-export function record(child, id, ok) {
-  const s = st(child, id); const L = SKILL[id].levels;
+const DAY = 864e5;
+const STEPS = [1, 3, 7]; // повторение через 1, 3 и 7 дней
+export function record(child, id, ok, key) {
+  const s = st(child, id); const L = SKILL[id].levels; const now = Date.now();
+  // повторение навыка: после ошибки — вернуть через день; верные ответы на повторении отодвигают срок
+  if (!ok) { s.due = now + DAY; s.step = 0; }
+  else if (s.due && now >= s.due) { s.step = (s.step || 0) + 1; if (s.step >= STEPS.length) { delete s.due; delete s.step; } else s.due = now + STEPS[s.step] * DAY; }
+  // повторение конкретного вопроса
+  if (key) {
+    const r = child.redo || (child.redo = {}); const list = r[id] || (r[id] = []);
+    const it = list.find(x => x.k === key);
+    if (!ok) { if (it) { it.t = now + DAY; it.s = 0; } else { list.push({ k: key, t: now + DAY, s: 0 }); if (list.length > 60) list.shift(); } }
+    else if (it && now >= it.t) { it.s++; if (it.s >= STEPS.length) list.splice(list.indexOf(it), 1); else it.t = now + STEPS[it.s] * DAY; }
+  }
   s.hist.push(ok ? 1 : 0); if (s.hist.length > 20) s.hist.shift();
   s.n++; if (ok) s.ok++; s.last = Date.now();
   const d = dayRec(child); d.n++; if (ok) d.ok++;
@@ -86,6 +98,8 @@ export function pickSkill(child, sec, exclude) {
     const stt = child.skills[s.id];
     if (!stt || !stt.n) x += 0.8;                              // ещё не пробовали
     else if (now - stt.last > 3 * 864e5) x += 0.6;             // давно не повторяли
+    if (stt && stt.due && now >= stt.due) x += 2.5;             // пора повторить
+    if (child.redo && child.redo[s.id] && child.redo[s.id].some(r => now >= r.t)) x += 1.5;
     if (s.weight) x *= s.weight;
     return x;
   });
@@ -124,3 +138,26 @@ export function weakList(child) {
     .map(([id, s]) => ({ id, w: weakness(child, id), acc: s.ok / s.n, n: s.n, lvl: s.lvl }))
     .filter(x => x.w > 0.3).sort((a, b) => b.w - a.w);
 }
+
+/**
+ * Выбор вопроса из банка: сначала то, что пора повторить, потом то, что ребёнок ещё не видел.
+ * pool — массив, keyFn(item) — уникальный ключ вопроса.
+ */
+export function bankPick(child, skillId, pool, keyFn) {
+  if (!pool.length) return null;
+  const now = Date.now();
+  if (child && child.redo && child.redo[skillId] && Math.random() < 0.4) {
+    const due = new Set(child.redo[skillId].filter(r => now >= r.t).map(r => r.k));
+    const cand = pool.filter(x => due.has(keyFn(x)));
+    if (cand.length) { const x = cand[Math.floor(Math.random() * cand.length)]; return x; }
+  }
+  if (!child) return pool[Math.floor(Math.random() * pool.length)];
+  const seen = child.seen || (child.seen = {}); const list = seen[skillId] || (seen[skillId] = []);
+  const set = new Set(list);
+  let cand = pool.filter(x => !set.has(keyFn(x)));
+  if (!cand.length) { seen[skillId] = list.slice(-Math.floor(pool.length / 3)); const s2 = new Set(seen[skillId]); cand = pool.filter(x => !s2.has(keyFn(x))); if (!cand.length) cand = pool; }
+  const x = cand[Math.floor(Math.random() * cand.length)];
+  const k = keyFn(x); seen[skillId].push(k); if (seen[skillId].length > 400) seen[skillId].shift();
+  return x;
+}
+export const dueCount = child => { const now = Date.now(); let n = 0; for (const s of Object.values(child.skills)) if (s.due && now >= s.due) n++; return n; };

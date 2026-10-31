@@ -1,6 +1,7 @@
 // «Ступеньки» © 2026 Павел Зайцев. Авторы: Павел Зайцев и Claude. Лицензия CC BY-NC-ND 4.0 — см. LICENSE
 // Закон Божий: Священная история Ветхого и Нового Завета, праздники, храм, святые
-import { register } from '../engine.js';
+import { register, bankPick } from '../engine.js';
+import { FAITH2 } from '../data/faith2.js';
 import { pick, shuffle } from '../ui.js';
 import { pic } from './common.js';
 
@@ -75,10 +76,11 @@ const Q = [
   [4, '⚔️', 'Какой святой князь победил шведов на Неве и рыцарей на Чудском озере?', 'Александр Невский', ['Дмитрий Донской', 'князь Владимир', 'Ярослав Мудрый'], '«Не в силе Бог, а в правде»'],
   [4, '🖼️', 'Кто написал икону «Троица»?', 'Андрей Рублёв', ['Феофан Грек', 'Дионисий', 'Симон Ушаков'], 'Преподобный Андрей Рублёв'],
 ];
-function bible(l) {
-  const pool = Q.filter(x => x[0] === l || (x[0] === l - 1 && Math.random() < 0.3));
-  const it = pick(pool.length ? pool : Q.filter(x => x[0] === l));
-  return { q: it[2], stage: pic(it[1]), choices: shuffle([it[3], ...it[4]]).map(v => ({ v, label: v })), answer: it[3], cols: it[3].length > 12 ? 1 : 2, explain: it[5] };
+const ALLQ = (() => { const seen = new Set(); return [...Q, ...FAITH2].filter(x => { const k = x[2]; if (seen.has(k)) return false; seen.add(k); return true; }); })();
+function bible(l, child) {
+  const pool = ALLQ.filter(x => x[0] === l || (x[0] === l - 1 && Math.random() < 0.3));
+  const it = bankPick(child, 'f-bible', pool.length ? pool : ALLQ.filter(x => x[0] === l), x => x[2]);
+  return { key: it[2], q: it[2], stage: pic(it[1]), choices: shuffle([it[3], ...it[4]]).map(v => ({ v, label: v })), answer: it[3], cols: it[3].length > 12 ? 1 : 2, explain: it[5] };
 }
 
 register([

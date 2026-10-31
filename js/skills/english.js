@@ -1,6 +1,7 @@
 // «Ступеньки» © 2026 Павел Зайцев. Авторы: Павел Зайцев и Claude. Лицензия CC BY-NC-ND 4.0 — см. LICENSE
 // Английский язык: слова с картинками, грамматика
-import { register } from '../engine.js';
+import { register, bankPick } from '../engine.js';
+import { W2, G2, PHRASES } from '../data/english2.js';
 import { pick, shuffle, opts, sample } from '../ui.js';
 import { pic, big } from './common.js';
 
@@ -21,20 +22,21 @@ const W = [
   ['kitchen', 'кухня', '🍳', 5], ['bedroom', 'спальня', '🛏️', 5], ['window', 'окно', '🪟', 5], ['door', 'дверь', '🚪', 5], ['city', 'город', '🏙️', 5], ['river', 'река', '🏞️', 5], ['mountain', 'гора', '⛰️', 5], ['island', 'остров', '🏝️', 5],
   ['doctor', 'врач', '👩‍⚕️', 5], ['farmer', 'фермер', '🧑‍🌾', 5], ['cook', 'повар', '🧑‍🍳', 5], ['pilot', 'лётчик', '🧑‍✈️', 5], ['friend', 'друг', '🤝', 5], ['church', 'церковь', '⛪', 5],
 ];
+const WALL = (() => { const sw = new Set(), se = new Set(); return [...W, ...W2].filter(x => { if (sw.has(x[0]) || se.has(x[2])) return false; sw.add(x[0]); se.add(x[2]); return true; }); })();
 function words(l, child) {
   const reader = !child || child.grade > 0 || child.age >= 7;
-  const pool = W.filter(w => w[3] <= l); const fresh = W.filter(w => w[3] === l);
-  const w = pick(Math.random() < 0.6 && fresh.length ? fresh : pool);
+  const pool = WALL.filter(w => w[3] <= l); const fresh = WALL.filter(w => w[3] === l);
+  const w = bankPick(child, 'e-words', Math.random() < 0.6 && fresh.length ? fresh : pool, x => x[0]);
   const others = sample(pool.filter(x => x[0] !== w[0]), 3);
   const t = !reader ? 0 : l === 1 ? pick([0, 1]) : pick([0, 1, 2, 3]);
-  if (t === 0) return { q: 'Послушай слово и найди картинку', say: ['Послушай слово и найди картинку', { en: w[0] }], choices: shuffle([w, ...others]).map(x => ({ v: x[0], label: x[2] })), answer: w[0], explain: `${w[0]} — ${w[1]}`, speakEn: w[0] };
-  if (t === 1) return { q: 'Как это по-английски?', stage: pic(w[2]), choices: shuffle([w, ...others]).map(x => ({ v: x[0], label: x[0], sayEn: x[0] })), answer: w[0], cols: 2, explain: `${w[1]} — ${w[0]}`, speakEn: w[0] };
-  if (t === 2) return { q: `Как переводится слово «${w[0]}»?`, say: ['Как переводится слово', { en: w[0] }], stage: big(w[0]), choices: shuffle([w, ...others]).map(x => ({ v: x[0], label: x[1] })), answer: w[0], cols: 2, explain: `${w[0]} — ${w[1]}` };
+  if (t === 0) return { key: w[0], q: 'Послушай слово и найди картинку', say: ['Послушай слово и найди картинку', { en: w[0] }], choices: shuffle([w, ...others]).map(x => ({ v: x[0], label: x[2] })), answer: w[0], explain: `${w[0]} — ${w[1]}`, speakEn: w[0] };
+  if (t === 1) return { key: w[0], q: 'Как это по-английски?', stage: pic(w[2]), choices: shuffle([w, ...others]).map(x => ({ v: x[0], label: x[0], sayEn: x[0] })), answer: w[0], cols: 2, explain: `${w[1]} — ${w[0]}`, speakEn: w[0] };
+  if (t === 2) return { key: w[0], q: `Как переводится слово «${w[0]}»?`, say: ['Как переводится слово', { en: w[0] }], stage: big(w[0]), choices: shuffle([w, ...others]).map(x => ({ v: x[0], label: x[1] })), answer: w[0], cols: 2, explain: `${w[0]} — ${w[1]}` };
   // пропущенная буква
   const i = Math.floor(Math.random() * w[0].length); const L = w[0][i];
-  const VOC = new Set(W.map(x => x[0]).concat(['cut', 'cot', 'hot', 'hit', 'hut', 'big', 'bug', 'beg', 'peg', 'pig', 'pin', 'pan', 'bad', 'bud', 'bed', 'red', 'rod', 'ten', 'tan', 'tin', 'sit', 'sat', 'set', 'pot', 'pit', 'pet', 'bat', 'but', 'bit', 'let', 'lot', 'not', 'net', 'nut', 'map', 'mop', 'top', 'tip', 'tap', 'dig', 'dog', 'fan', 'fin', 'fun', 'man', 'men', 'run', 'ran', 'sun', 'son', 'sin', 'cap', 'cup', 'cop']));
+  const VOC = new Set(WALL.map(x => x[0]).concat(['cut', 'cot', 'hot', 'hit', 'hut', 'big', 'bug', 'beg', 'peg', 'pig', 'pin', 'pan', 'bad', 'bud', 'bed', 'red', 'rod', 'ten', 'tan', 'tin', 'sit', 'sat', 'set', 'pot', 'pit', 'pet', 'bat', 'but', 'bit', 'let', 'lot', 'not', 'net', 'nut', 'map', 'mop', 'top', 'tip', 'tap', 'dig', 'dog', 'fan', 'fin', 'fun', 'man', 'men', 'run', 'ran', 'sun', 'son', 'sin', 'cap', 'cup', 'cop']));
   const wrong = sample('aeiouybcdglmnprst'.split('').filter(c => c !== L && !VOC.has(w[0].slice(0, i) + c + w[0].slice(i + 1))), 3);
-  return { q: 'Какой буквы не хватает?', stage: `${pic(w[2])}${big(w[0].slice(0, i) + '<span class="gap">_</span>' + w[0].slice(i + 1))}`, choices: shuffle([L, ...wrong]).map(v => ({ v, label: v })), answer: L, big: true, explain: `${w[0]} — ${w[1]}`, speakEn: w[0] };
+  return { key: w[0], q: 'Какой буквы не хватает?', stage: `${pic(w[2])}${big(w[0].slice(0, i) + '<span class="gap">_</span>' + w[0].slice(i + 1))}`, choices: shuffle([L, ...wrong]).map(v => ({ v, label: v })), answer: L, big: true, explain: `${w[0]} — ${w[1]}`, speakEn: w[0] };
 }
 
 // [уровень, предложение с ___, ответ, неверные, пояснение]
@@ -67,9 +69,14 @@ const G = [
   [4, 'This is the ___ day of my life!', 'happiest', ['happier', 'happy'], 'happy — happier — the happiest'],
   [4, 'I have ___ finished my homework.', 'already', ['yesterday', 'ago'], 'Present Perfect: have already finished'],
 ];
-function grammar(l) {
-  const it = pick(G.filter(x => x[0] === l || x[0] === l - 1));
-  return { q: 'Выбери правильное слово', stage: big(it[1].replace('___', '<span class="gap">___</span>')), choices: shuffle([it[2], ...it[3]]).map(v => ({ v, label: v })), answer: it[2], cols: 3, explain: it[4], speakEn: it[1].replace(/___/, it[2] === '—' ? '' : it[2]).replace(/ (s|es)\b/, '$1') };
+const GALL = [...G, ...G2.map(x => [x[0], x[1], x[2], x[3], x[4]])];
+function grammar(l, child) {
+  if (l >= 1 && Math.random() < 0.3 && PHRASES.length) {
+    const ph = bankPick(child, 'e-grammar', PHRASES.filter(x => x[0] <= l), x => x[1]);
+    return { key: ph[1], q: 'Как переводится фраза?', say: ['Как переводится фраза', { en: ph[1] }], stage: big(ph[1]), choices: shuffle([ph[2], ...ph[3]]).map(v => ({ v, label: v })), answer: ph[2], cols: 1, explain: `${ph[1]} — ${ph[2]}`, speakEn: ph[1] };
+  }
+  const it = bankPick(child, 'e-grammar', GALL.filter(x => x[0] === l || x[0] === l - 1), x => x[1]);
+  return { key: it[1], q: 'Выбери правильное слово', stage: big(it[1].replace('___', '<span class="gap">___</span>')), choices: shuffle([it[2], ...it[3]]).map(v => ({ v, label: v })), answer: it[2], cols: 3, explain: it[4], speakEn: it[1].replace(/___/, it[2] === '—' ? '' : it[2]).replace(/ (s|es)\b/, '$1') };
 }
 
 register([

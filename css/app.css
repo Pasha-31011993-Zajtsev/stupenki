@@ -326,3 +326,33 @@ ol.steps li:hover{background:#F5F7FB}
 
 .copyright{text-align:center;color:var(--muted);font-size:13px;margin-top:28px;opacity:.8}
 .about .logo-big{margin-top:6px}
+
+/* чтение */
+.read-text{text-align:left;background:#FFFBF2;border:2px solid #F3E6C8;border-radius:var(--r-l);padding:16px 18px;margin:4px auto 12px;max-width:640px;font-size:19px;line-height:1.6;font-weight:600;-webkit-user-select:text;user-select:text}
+.read-text p{margin:0 0 .6em}
+.read-title{font-weight:900;font-size:21px;margin-bottom:8px}
+.read-q{max-width:640px;margin:14px auto 0;scroll-margin-top:12px}
+.read-qn{font-size:14px;color:var(--muted);font-weight:800;margin-bottom:4px}
+.small-prompt{font-size:20px;margin-bottom:12px}
+/* диктант */
+.dict-slots{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:14px 0}
+.slot{width:44px;height:56px;border-bottom:4px solid var(--line);font-size:34px;font-weight:900;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.slot.full{border-color:var(--accent)}
+.dict-slots.right .slot{color:var(--good);border-color:var(--good)}
+.dict-tiles{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.tile{width:52px;height:58px;border-radius:14px;background:#FFF3C4;box-shadow:0 4px 0 #E2C46A;font-size:30px;font-weight:900}
+.tile.used{opacity:.25;box-shadow:none}
+.tile:active{transform:translateY(3px);box-shadow:0 1px 0 #E2C46A}
+.dict-input{max-width:420px;display:block;margin:14px auto;font-size:28px;text-align:center;font-weight:800}
+.dict-input:disabled{color:var(--good);border-color:var(--good)}
+.dict-hint{color:var(--warn);font-weight:800;margin-top:8px;min-height:22px}
+.geo{max-width:100%;height:auto}
+
+/* доступы и места */
+.perm-ico{font-size:54px;line-height:1.1}
+.perm-why{font-size:18px;font-weight:700}
+.perm-small{font-size:15px;color:var(--muted);text-align:left}
+.modal .col{margin-top:10px}
+.geo-status{text-align:center;margin:16px auto;max-width:560px;font-weight:700;font-size:18px}
+.geo-status.ok{color:var(--good);font-size:22px;font-weight:900}
+.compass{display:flex;justify-content:center;margin-top:10px}

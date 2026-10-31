@@ -6,6 +6,7 @@ import { say, stop, chime, Recorder, playBlobPublic } from './voice.js';
 import { frontSVG, sideSVG, animate, P0, SIDE0 } from './mouth.js';
 import { save } from './store.js';
 import { register } from './engine.js';
+import { ensurePermission, showHelp } from './perm.js';
 import { themeOf } from './themes.js';
 
 /* ================= АРТИКУЛЯЦИОННАЯ ГИМНАСТИКА ================= */
@@ -164,10 +165,11 @@ function mirrorBtn(box) {
   let stream = null, video = null;
   const btn = h('button.btn.ghost', { onclick: async () => {
     if (stream) { stopCam(); return; }
+    if (!(await ensurePermission('cam'))) return;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       video = h('video.mirror', { autoplay: true, playsinline: true, muted: true }); video.srcObject = stream; box.append(video); btn.textContent = '✖ Убрать зеркало';
-    } catch (e) { toast('Не получилось включить камеру'); }
+    } catch (e) { if (e && e.name === 'NotAllowedError') showHelp('cam'); else toast('Не получилось включить камеру'); }
   } }, '🪞 Зеркало');
   const stopCam = () => { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; if (video) video.remove(); btn.textContent = '🪞 Зеркало'; };
   onLeave(stopCam);
@@ -242,7 +244,7 @@ function recordPanel(child) {
   const sample = h('button.btn.ghost', { onclick: () => target && say(target) }, '🔊 Образец');
   let on = false;
   const btn = h('button.rec-btn', { onclick: async () => {
-    if (!on) { try { await R.start(); on = true; btn.classList.add('on'); btn.textContent = 'Стоп'; status.textContent = 'Говори!'; } catch (e) { status.textContent = 'Нужно разрешить микрофон'; } }
+    if (!on) { if (!(await ensurePermission('mic'))) return; try { await R.start(); on = true; btn.classList.add('on'); btn.textContent = 'Стоп'; status.textContent = 'Говори!'; } catch (e) { if (e && e.name === 'NotAllowedError') showHelp('mic'); else status.textContent = 'Микрофон недоступен'; } }
     else { on = false; btn.classList.remove('on'); btn.textContent = 'Запись'; last = await R.stop(); status.textContent = last ? 'Готово! Послушай себя' : 'Ничего не записалось'; play.disabled = !last; if (last) { playBlobPublic(last); mark(child, 'rec'); } }
   } }, 'Запись');
   onLeave(() => R.cancel());

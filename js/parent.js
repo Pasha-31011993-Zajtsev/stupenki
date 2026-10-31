@@ -5,9 +5,11 @@ import { h, toast, modal, confirmBox, avatarEl, ageText, resizeImage, rnd, plura
 import { go, back, header, reset, app, onLeave, refresh } from './nav.js';
 import { say, ruVoices, enVoices, refreshVoices, currentVoice, Recorder, saveRec, delRec, hasRec, playRecording, recCount, stop } from './voice.js';
 import { THEMES, AVATARS, themeOf, applyTheme, praiseFor, TRY_AGAIN } from './themes.js';
-import { SECTIONS, FOCUSABLE, SKILLS, SKILL, weakList, accuracy, effG, available } from './engine.js';
+import { SECTIONS, FOCUSABLE, SKILLS, SKILL, weakList, accuracy, effG, available, dueCount } from './engine.js';
 import { EXERCISES, SOUNDS } from './logoped.js';
 import { WALKS } from './walks.js';
+import { placesScreen, places } from './places.js';
+import { ensurePermission, showHelp } from './perm.js';
 
 let familyFn = null;
 export function setFamily(fn) { familyFn = fn; }
@@ -129,6 +131,7 @@ export function parentHome() {
     h('div.menu',
       menuItem('🎙', 'Мой голос', 'Запишите похвалу, имя и задания своим голосом', () => go(recordingsScreen)),
       menuItem('🔊', 'Голос и скорость речи', 'Какой голос читает задания', () => go(voiceScreen)),
+      menuItem('📍', 'Мои места', 'Дом, школа, храм — для личных заданий на прогулке', () => go(placesScreen)),
       menuItem('🧭', 'Дневник прогулок', 'Ответы и фото детей с прогулок', () => go(walkDiary)),
       menuItem('⚙️', 'Настройки', 'Длина занятия, код родителя', () => go(settingsScreen)),
       menuItem('❓', 'Как пользоваться', 'Коротко о приложении', () => go(helpScreen)),
@@ -186,6 +189,7 @@ function childStats(id) {
     h('div.kpis', kpi(wk.min + ' мин', 'занимался за неделю'.replace('занимался', c.gender === 'f' ? 'занималась' : 'занимался')), kpi(String(wk.n), 'заданий за неделю'), kpi(totalN ? Math.round(totalOk / totalN * 100) + '%' : '—', 'верно с первого раза'), kpi('⭐ ' + c.stars, 'звёздочек всего')),
     h('div.panel', h('h2', 'Неделя'), chart, h('p.muted.small', 'Высота — сколько заданий, зелёная часть — сколько верно с первого раза.')),
     h('div.panel', h('h2', 'На что обратить внимание'), weakBox, weak.length ? h('p.muted.small', 'Приложение уже даёт эти задания чаще. Можно ещё отметить раздел в профиле как «упор» или позаниматься вместе.') : null),
+    h('div.panel', h('h2', '🔁 Повторение'), (() => { const now = Date.now(); const due = dueCount(c); const items = Object.values(c.redo || {}).reduce((a, l) => a + l.length, 0); const soon = Object.values(c.redo || {}).reduce((a, l) => a + l.filter(r => now >= r.t).length, 0); return h('p', items ? `Вопросов, в которых были ошибки и которые вернутся для повторения: ${items}. Из них пора повторить сегодня: ${soon}. Тем на повторении: ${due}.` : 'Ошибочных вопросов на повторении пока нет.'); })(), h('p.muted.small', 'Вопрос, в котором ребёнок ошибся, возвращается через 1 день, потом через 3 и через 7 дней. Если на повторении отвечает верно — вопрос уходит.')),
     h('div.panel', h('h2', 'По разделам'), secRows),
     h('div.panel', h('h2', 'Логопед'), h('p', exDone.length ? 'Упражнения: ' + exDone.join(', ') : 'Упражнения ещё не делали'), h('p', sndDone.length ? 'Звуки (повторений): ' + sndDone.join(', ') : 'Звуки ещё не тренировали'), h('p', 'Записей своего голоса: ' + (c.speech.rec || 0))),
     h('div.panel', h('h2', 'Прогулки'), h('p', walksDone ? `Выполнено заданий: ${walksDone}` : 'Заданий на прогулке ещё не было'), walksDone ? h('button.btn.ghost', { onclick: () => go(walkDiary, c.id) }, 'Открыть дневник') : null),
@@ -215,7 +219,7 @@ function recordingsScreen() {
     const recB = h('button.icon-btn.rec', { 'aria-label': 'Записать' }, '🎙');
     recB.onclick = async () => {
       if (active && active !== recB) return toast('Сначала остановите другую запись');
-      if (!active) { try { await R.start(); active = recB; recB.classList.add('on'); recB.textContent = '■'; st.textContent = 'говорите…'; } catch (e) { toast('Разрешите доступ к микрофону'); } }
+      if (!active) { if (!(await ensurePermission('mic'))) return; try { await R.start(); active = recB; recB.classList.add('on'); recB.textContent = '■'; st.textContent = 'говорите…'; } catch (e) { if (e && e.name === 'NotAllowedError') showHelp('mic'); else toast('Микрофон недоступен'); } }
       else { const b = await R.stop(); active = null; recB.classList.remove('on'); recB.textContent = '🎙'; if (b) { await saveRec(phrase, b); st.textContent = '● записано'; toast('Записано'); playRecording(phrase); } else st.textContent = hasRec(phrase) ? '● записано' : 'не записалось'; }
     };
     return h('div.rec-row', h('div.phrase', phrase, st),
@@ -255,7 +259,8 @@ function walkDiary(onlyId) {
   kids.forEach(c => {
     const done = WALKS.filter(w => c.walks[w[0]]);
     const p = h('div.panel', h('h2', avatarEl(c, 34), ' ', c.name));
-    if (!done.length) p.append(h('p.muted', 'Пока нет выполненных заданий'));
+    places().forEach(pl => { const d = c.walks['place:' + pl.id]; if (d) p.append(h('div.diary', h('div.ico', '📍'), h('div', h('div.name', 'Дошёл до места: '.replace('Дошёл', c.gender === 'f' ? 'Дошла' : 'Дошёл') + pl.name + ' · ' + d.date.split('-').reverse().join('.')), h('div.small.muted', d.answer === 'GPS' ? 'проверено по GPS' : 'подтвердил взрослый')))); });
+    if (!done.length && !places().some(pl => c.walks['place:' + pl.id])) p.append(h('p.muted', 'Пока нет выполненных заданий'));
     done.forEach(w => {
       const d = c.walks[w[0]]; const img = h('img.diary-photo', { style: { display: 'none' } });
       if (d.photo) blobGet(`walk:${c.id}:${w[0]}`).then(b => { if (b) { img.src = URL.createObjectURL(b); img.style.display = 'block'; } });
@@ -284,7 +289,8 @@ function helpScreen() {
     h('div.panel.help',
       h('h2', 'Каждый день'), p('Ребёнок нажимает на своё имя и выбирает «Занятие на сегодня» — это 10 заданий из разных разделов. Можно открыть и отдельный раздел.'),
       h('h2', 'Как подстраивается'), p('5 верных ответов подряд — уровень темы растёт. 3 ошибки из 4 — уровень снижается. Темы, где больше ошибок, и разделы с «упором» встречаются чаще.'),
-      h('h2', 'Ошибки'), p('После первой ошибки ребёнок пробует ещё раз. После второй — видит правильный ответ и объяснение. В статистику идёт только первая попытка.'),
+      h('h2', 'Ошибки и повторение'), p('После первой ошибки ребёнок пробует ещё раз. После второй — видит правильный ответ и объяснение. В статистику идёт только первая попытка. Вопросы с ошибками возвращаются через 1, 3 и 7 дней, а новые вопросы показываются раньше уже знакомых.'),
+      h('h2', 'Мои места'), p('В разделе «Мои места» отметьте дом, школу, храм, парк — встаньте у места и нажмите «Запомнить точку». У детей появятся задания «Дойди до…» с проверкой по GPS и вопросы про адреса. Координаты хранятся только на этом устройстве. Без GPS дошедшего подтверждает взрослый.'),
       h('h2', 'Логопед'), p('Зарядку для язычка лучше делать каждый день по 3–5 минут перед зеркалом (кнопка «Зеркало» включает камеру). Звуки ставим по порядку: сначала свистящие (С, З, Ц), потом шипящие (Ш, Ж, Ч, Щ), потом Л и Р. Приложение не заменяет логопеда.'),
       h('h2', 'Прогулка ★'), p('Задания на улицу меняются по временам года. Выполняйте их вместе. Фото и ответы сохраняются в дневнике прогулок.'),
       h('h2', 'Установить как приложение'), p('На телефоне: меню браузера → «Добавить на главный экран» (на iPhone: кнопка «Поделиться» → «На экран Домой»). После первого открытия всё работает без интернета.'))];
@@ -302,7 +308,7 @@ export function aboutScreen() {
       h('p', h('b', 'Можно: '), 'пользоваться дома, в школе, в садике, в воскресной школе; делиться ссылкой; распространять точную копию с указанием авторов.'),
       h('p', h('b', 'Нельзя: '), 'продавать приложение или его части, брать плату за доступ, встраивать в платные продукты, выдавать за свою разработку, убирать сведения об авторах, распространять переделанные версии.'),
       h('p.muted.small', 'Полный текст — в файле LICENSE в репозитории github.com/Pasha-31011993-Zajtsev/stupenki. Шрифт Nunito — SIL Open Font License 1.1.')),
-    h('div.panel', h('h2', 'Ваши данные'), h('p', 'Приложение ничего не отправляет в интернет. Профили, прогресс, фото и записи голоса хранятся только на этом устройстве.'))];
+    h('div.panel', h('h2', 'Ваши данные'), h('p', 'Приложение ничего не отправляет в интернет. Профили, прогресс, фото, записи голоса, адреса и координаты мест хранятся только на этом устройстве. Доступ к местоположению, микрофону и камере запрашивается только для конкретных заданий и только с вашего согласия.'))];
 }
 
 function stairs() {

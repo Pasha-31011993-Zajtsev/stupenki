@@ -62,8 +62,9 @@ export function confetti(emojis = ['🎉', '⭐', '✨', '🎈']) {
 
 export function modal(content, { onClose, wide } = {}) {
   const bg = h('div.modal-bg'); const card = h('div.modal' + (wide ? '.wide' : ''), content);
-  const close = () => { bg.remove(); onClose && onClose(); };
-  bg.addEventListener('click', e => { if (e.target === bg) close(); });
+  // close() — просто закрыть; onClose вызывается только когда окно закрыли тапом мимо
+  const close = () => { bg.remove(); };
+  bg.addEventListener('click', e => { if (e.target === bg) { close(); onClose && onClose(); } });
   bg.append(card); document.body.append(bg);
   return { close, card };
 }
