@@ -131,6 +131,11 @@ export function lessonScreen(sec) {
     } else {
       const n = task.cols || (task.choices.length === 3 ? 3 : 2);
       const box = h('div.options' + (task.big ? '.big' : '') + (task.mid ? '.mid' : '') + (task.tall ? '.tall' : ''), { style: { gridTemplateColumns: `repeat(${n}, 1fr)` } });
+      // один размер шрифта для всех вариантов задания
+      const plains = task.choices.filter(o => !/<(svg|span|div)/.test(String(o.label))).map(o => String(o.label).replace(/<[^>]+>/g, '').trim());
+      const maxLen = Math.max(0, ...plains.map(p => p.length));
+      const anyWords = plains.some(p => /[а-яёa-z]{2,}/i.test(p));
+      const sizeCls = maxLen > 9 ? 'textopt' : (anyWords && maxLen > 2 ? 'midopt' : null);
       task.choices.forEach(o => {
         const b = h('button.opt', { html: o.label, onclick: () => {
           if (finished || b.classList.contains('bad')) return;
@@ -139,8 +144,7 @@ export function lessonScreen(sec) {
         } });
         const plain = String(o.label).replace(/<[^>]+>/g, '').trim();
         const hasHtml = /<(svg|span|div)/.test(String(o.label));
-        if (!hasHtml && plain.length > 9) b.classList.add('textopt');
-        else if (!hasHtml && plain.length > 4 && /[а-яёa-z]/i.test(plain)) b.classList.add('midopt');
+        if (sizeCls) b.classList.add(sizeCls);
         if (!reader && !hasHtml && /[а-яё]{2,}/i.test(plain)) {
           b.append(h('span.opt-say', { role: 'button', 'aria-label': 'Послушать вариант', onclick: e => { e.stopPropagation(); say(plain.replace(/[👍👎]/g, '')); } }, '🔊'));
           b.classList.add('has-say');

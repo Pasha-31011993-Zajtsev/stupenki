@@ -37,7 +37,7 @@ export const TREES = [
 ];
 function trees(l, child) {
   const t = bankPick(child, 'w-trees', TREES.slice(0, l === 1 ? 6 : 12), x => x[0]);
-  return { q: 'Какое это дерево?', stage: `<div class="desc">🌳 ${t[1]}</div>`, choices: opts(t[0], TREES.slice(0, l === 1 ? 6 : 12).map(x => x[0])).map(v => ({ v, label: v })), answer: t[0], cols: 2, explain: `Это ${t[0]}. На прогулке попробуй найти такое дерево!` };
+  return { q: 'Какое это дерево?', say: ['Какое это дерево?', t[1]], stage: `<div class="desc">🌳 ${t[1]}</div>`, choices: opts(t[0], TREES.slice(0, l === 1 ? 6 : 12).map(x => x[0])).map(v => ({ v, label: v })), answer: t[0], cols: 2, explain: `Это ${t[0]}. На прогулке попробуй найти такое дерево!` };
 }
 
 /* ---------- Природа, география, человек: банк вопросов ---------- */
