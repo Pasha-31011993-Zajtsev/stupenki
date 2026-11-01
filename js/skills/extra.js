@@ -116,12 +116,12 @@ function geometry(l) {
     const sq = Math.random() < 0.3; const a = rnd(2, 9), b = sq ? a : rnd(2, 8);
     if (a === b && !sq) return geometry(l);
     const P = 2 * (a + b);
-    return { q: sq ? 'Найди периметр квадрата' : 'Найди периметр прямоугольника', stage: rectSVG(a, b), choices: ch(opts(P, [a * b, a + b, P + 2, P - 2, P + 4].filter(x => x > 0 && x !== P))), answer: P, big: true, explain: `Периметр — сумма длин всех сторон: ${a} + ${b} + ${a} + ${b} = ${P} см` };
+    return { q: sq ? 'Найди периметр квадрата' : 'Найди периметр прямоугольника', stage: rectSVG(a, b), choices: ch(opts(P, [a * b, a + b, P + 2, P - 2, P + 4].filter(x => x > 0 && x !== P))), answer: P, big: true, explain: `Периметр — это сумма длин всех сторон: ${a} + ${b} + ${a} + ${b} = ${P} см` };
   }
   if (l === 2) {
     const a = rnd(2, 8), b = rnd(2, 6);
     if (Math.random() < 0.4) return { q: 'Сколько клеточек занимает прямоугольник? Это его площадь в квадратных сантиметрах', stage: rectSVG(a, b, 'см', true), choices: ch(opts(a * b, [2 * (a + b), a * b + a, a * b - b, a + b].filter(x => x > 0 && x !== a * b))), answer: a * b, big: true, explain: `${b} ${b < 5 ? 'ряда' : 'рядов'} по ${a} клеточек: ${a} × ${b} = ${a * b} см²` };
-    return { q: 'Найди площадь прямоугольника', stage: rectSVG(a, b), choices: opts(a * b, [2 * (a + b), a + b, a * b + 2, a * b - 2].filter(x => x > 0 && x !== a * b)).map(v => ({ v, label: v + ' см²' })), answer: a * b, explain: `Площадь = длина × ширина: ${a} × ${b} = ${a * b} см²`, mid: true };
+    return { q: 'Найди площадь прямоугольника', stage: rectSVG(a, b), choices: opts(a * b, [2 * (a + b), a + b, a * b + 2, a * b - 2].filter(x => x > 0 && x !== a * b)).map(v => ({ v, label: v + ' см²' })), answer: a * b, explain: `Площадь — это длина × ширину: ${a} × ${b} = ${a * b} см²`, mid: true };
   }
   if (l === 3) {
     if (Math.random() < 0.5) {

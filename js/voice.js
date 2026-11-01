@@ -81,7 +81,19 @@ export function stop() {
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
 
+// убрать эмодзи и служебные символы — голосовой движок читает их названия
+const clean = t => String(t).replace(/[\p{Extended_Pictographic}\u{FE0F}\u{FE0E}\u{200D}\u{20E3}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}]/gu, ' ').replace(/[«»"_…]/g, ' ').replace(/\s+/g, ' ').trim();
+// математические знаки — словами, чтобы голос читал понятно
+const sayMath = t => String(t)
+  .replace(/(\d)\s*см²/g, '$1 квадратных сантиметров').replace(/см²/g, 'квадратных сантиметров')
+  .replace(/(\d)\s*°/g, '$1 градусов')
+  .replace(/(\d)\s*[−-]\s*(\d)/g, '$1 минус $2').replace(/\s−\s/g, ' минус ')
+  .replace(/\s*×\s*/g, ' умножить на ').replace(/(\d)\s*·\s*(\d|x)/g, '$1 умножить на $2')
+  .replace(/(\d)\s*:\s*(\d)/g, '$1 разделить на $2')
+  .replace(/\s*=\s*\?/g, ' равно сколько').replace(/\s=\s/g, ' равно ')
+  .replace(/(\d)\s*\+\s*(\d)/g, '$1 плюс $2').replace(/(\d)\s*–\s*(\d)/g, '$1 или $2').replace(/≈/g, ' примерно ').replace(/π/g, ' пи ').replace(/\s*→\s*/g, ', ').replace(/\s+–\s+/g, ' до ');
 function tts(text, lang, rate, tok) {
+  text = lang === 'en' ? clean(text) : clean(sayMath(text));
   return new Promise(resolve => {
     if (!('speechSynthesis' in window) || !text) { resolve(); return; }
     try {
